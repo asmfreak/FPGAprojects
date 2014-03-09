@@ -1,12 +1,13 @@
 /// Модуль счётчика
 module count #(
     // Ширина счётчика в битах
-    parameter       COUNTER_SIZE            = 32
+    parameter       COUNTER_SIZE            = 32,
+    parameter       MAX                     = 32'b1111_1111_1111_1111_1111_1111_1111_1111
 ) (
     input   wire                      clk,
     input   wire                      reset_n,
     input   wire                      enable,
-    input   wire [7:0]                counterMode,
+    input   wire [1:0]                counterMode,
     input   wire [COUNTER_SIZE-1 : 0] match_value,
     
     output  wire [COUNTER_SIZE-1 : 0] count,
@@ -17,26 +18,31 @@ wire dir;
 assign dir = counterMode[0];
 //0 - считаем в плюс
 //1 - считаем в минус
-wire [1:0] ovfMode;
+wire ovfMode;
 assign ovfMode = counterMode[1];
-//0 - считаем до MAX
-//1 - считаем до match_value
+//0 - считаем от/до MAX
+//1 - считаем от/до match_value
 
 reg [COUNTER_SIZE-1 : 0] val;
 always @ ( posedge clk or negedge reset_n) begin
+    $display("val = %x",val);
     if (!reset_n) begin
         val <= 0;
     end else if (enable) begin
-        val <= val + (dir)?1:-1;
+        if(overflow) val<=(dir)?((ovfMode)?(match_value):MAX):(0);
+        else begin
+            if(dir) val <= val - 1;
+            else val <= val + 1;
+        end
     end
 end
 
 initial begin
     val = 0;
 end
-assign count = val;
-assign overflow = (dir)?(ovfMode?(match_occured):(val == {1{COUNTER_SIZE}})):(val==0);
-assign match_occured = (val == match_value);
 
+assign count = val;
+assign overflow = (dir)?(val==0):(ovfMode?(match_occured):(val == MAX));
+assign match_occured = (val == match_value);
 
 endmodule
