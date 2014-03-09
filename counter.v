@@ -15,17 +15,19 @@ module count #(
 );
 wire dir;
 assign dir = counterMode[0];
+//0 - считаем в плюс
+//1 - считаем в минус
 wire [1:0] ovfMode;
-assign ovfMode = counterMode[2:1];
-//00 - считаем до MAX
-//01 - считаем до match_value
+assign ovfMode = counterMode[1];
+//0 - считаем до MAX
+//1 - считаем до match_value
 
 reg [COUNTER_SIZE-1 : 0] val;
 always @ ( posedge clk or negedge reset_n) begin
     if (!reset_n) begin
         val <= 0;
     end else if (enable) begin
-        val <= val + 1;
+        val <= val + (dir)?1:-1;
     end
 end
 
@@ -33,7 +35,7 @@ initial begin
     val = 0;
 end
 assign count = val;
-assign overflow = (val == 0);
+assign overflow = (dir)?(ovfMode?(match_occured):(val == {1{COUNTER_SIZE}})):(val==0);
 assign match_occured = (val == match_value);
 
 
