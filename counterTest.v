@@ -19,7 +19,7 @@ initial begin
     clk=0;
     reset_n=1;
     enable=0;
-    ovf_mode=1;
+    ovf_mode=0;
     up_n=1;
     match_value=25;
     #5 enable=1;
@@ -32,7 +32,7 @@ always begin
 end
 
 
-count #(bin) c(clk,reset_n,enable,mode , match_value, oCounter, match, ovf);
+count #(bin,32'b1111_1111) c(clk,reset_n,enable,mode , match_value, oCounter, match, ovf);
 
 initial
 begin
