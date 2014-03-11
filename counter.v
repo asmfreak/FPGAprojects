@@ -10,7 +10,7 @@ module count #(
     input   wire [1:0]                counterMode,
     input   wire [COUNTER_SIZE-1 : 0] match_value,
     
-    output  wire [COUNTER_SIZE-1 : 0] count,
+    output  reg  [COUNTER_SIZE-1 : 0] count,
     output  wire                      match_occured,
     output  wire                      overflow
 );
@@ -23,26 +23,34 @@ assign ovfMode = counterMode[1];
 //0 - считаем от/до MAX
 //1 - считаем от/до match_value
 
-reg [COUNTER_SIZE-1 : 0] val;
+//reg [COUNTER_SIZE-1 : 0] val;
 always @ ( posedge clk or negedge reset_n) begin
-    $display("val = %x",val);
+    $display("val = %x",count);
     if (!reset_n) begin
-        val <= 0;
+        count<=0;
     end else if (enable) begin
-        if(overflow) val<=(dir)?((ovfMode)?(match_value):MAX):(0);
-        else begin
-            if(dir) val <= val - 1;
-            else val <= val + 1;
+        if(overflow) begin
+            if(dir)
+                if(ovfMode)begin
+                    count<=match_value;
+                end else
+                    count<=MAX;
+            else 
+                count<=0;
+        end else begin
+            $display("clk");
+            if(dir) count <= count - 1;
+            else count <= count + 1;
         end
     end
 end
 
 initial begin
-    val = 0;
+    count<=0;
 end
 
-assign count = val;
-assign overflow = (dir)?(val==0):(ovfMode?(match_occured):(val == MAX));
-assign match_occured = (val == match_value);
+//assign count = val;
+assign overflow = (dir)?(count==0):(ovfMode?(match_occured):(count == MAX));
+assign match_occured = (count == match_value);
 
 endmodule
